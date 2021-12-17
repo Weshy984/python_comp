@@ -1,0 +1,490 @@
+%%
+simple_stmts:
+    simple_stmt NLOOK';' NEWLINE  //# Not needed, there for speedup
+   | ';''.'simple_stmt '['';'']' NEWLINE 
+    ;
+simple_stmt:
+    assignment
+    star_expressions
+    return_stmt
+    import_stmt
+    raise_stmt
+    PASS
+    del_stmt
+    yield_stmt
+    assert_stmt
+    BREAK
+    CONTINUE
+    global_stmt
+    nonlocal_stmt
+    ; 
+assignment:
+     NAME ':' expression '['EQUAL annotated_rhs ']' 
+    | '(''(' single_target ')' 
+     | single_subscript_attribute_target')' ':' expression '['EQUAL annotated_rhs ']' 
+    | '('star_targets EQUAL ')' '('yield_expr | star_expressions')' '!' EQUAL '['TYPE_COMMENT']' 
+    | single_target augassign TILDE '('yield_expr | star_expressions')'
+    ;
+ augassign:
+    | '+''=' 
+    | '-''=' 
+    | '*''=' 
+    | '@''=' 
+    | '/''=' 
+    | '%''=' 
+    | '&''=' 
+    | '|''=' 
+    | '^''=' 
+    | LEFTSHIFT'=' 
+    | RIGHTSHIFT'=' 
+    | DOUBLESTAR'=' 
+    | '/''/''='
+    ;
+//global
+global_stmt: GLOBAL ',' '.' NAME
+    ;
+nonlocal_stmt: NONLOCAL ',' '.' NAME
+    ;
+//yield
+yield_stmt: yield_expr
+    ;
+assert_stmt: ASSERT expression '[' ',' expression ']'
+    ;
+//del
+del_stmt:
+    | DEL del_targets PLOOK '(' ';' | NEWLINE ')'
+    ;
+//import
+import_stmt: 
+    import_name
+    | import_from
+    ;
+import_name: IMPORT dotted_as_names
+    ;
+import_from:
+     FROM '('DOT | ELLIPSIS')''*' dotted_name IMPORT import_from_targets 
+     FROM '('DOT | ELLIPSIS')' IMPORT import_from_targets 
+    ;
+import_from_targets:
+     LBR import_from_as_names '['','']' RBR 
+    | import_from_as_names NLOOK','
+    | '*' 
+    ;
+import_from_as_names:
+    | ',' '.'import_from_as_name
+    ;
+import_from_as_name:
+    | NAME '['AS NAME ']' 
+    ;
+dotted_as_names:
+    | ',' '.' dotted_as_name
+    ;
+dotted_as_name:
+    | dotted_name '[' AS NAME ']'
+    ;
+dotted_name:
+     dotted_name '.' NAME 
+    | NAME
+    ;
+//return
+return_stmt:
+     RETURN '['star_expressions']'
+    ;
+//raise 
+raise_stmt:
+     RAISE expression '['FROM expression ']' 
+    | RAISE 
+    ;
+//star expressions
+star_expressions:
+     star_expression '('',' star_expression ')' '['','']' 
+    | star_expression ',' 
+   // | star_expression
+    ;
+//star expression
+star_expression:
+     '*' bitwise_or 
+    | expression
+    ;
+//star named expressions
+star_named_expressions: ',''.'star_named_expression '['','']'
+    ; 
+//star named expression
+star_named_expression:
+     '*' bitwise_or 
+    | named_expression
+    ;
+//assignment
+assigment_expression:
+     NAME COLONEQUAL '~' expression 
+    ;
+//named expression
+named_expression:
+     assigment_expression
+    | expression '!' COLONEQUAL
+    ;
+//annotated rhs
+annotated_rhs: yield_expr 
+    | star_expressions
+    ;
+//expression
+expression:
+     disjunction IF disjunction ELSE expression 
+    | disjunction
+    | lambdef
+    ;
+//lamdadef
+lambdef:
+     LAMDA '['lambda_params']' ':' expression 
+    ;
+//lamda params
+lambda_params:
+     lambda_parameters  
+    ;
+//lamda parameters
+lambda_parameters:
+     lambda_slash_no_default lambda_param_no_default'*' lambda_param_with_default'*' '['lambda_star_etc']' 
+    | lambda_slash_with_default lambda_param_with_default'*' '['lambda_star_etc']' 
+    | lambda_param_no_default lambda_param_with_default'*' '['lambda_star_etc']' 
+    | lambda_param_with_default '['lambda_star_etc']' 
+    | lambda_star_etc 
+    ;
+//lambda slash no default
+lambda_slash_no_default:
+     lambda_param_no_default '/' ',' 
+    | lambda_param_no_default '/' PLOOK':'
+    ;
+//lambda slash with default 
+lambda_slash_with_default:
+     lambda_param_no_default'*' lambda_param_with_default '/' ',' 
+    | lambda_param_no_default'*' lambda_param_with_default '/' PLOOK':' 
+    ;
+//lamda star def
+lambda_star_etc:
+     '*' lambda_param_no_default lambda_param_maybe_default'*' '['lambda_kwds']' 
+    | '*' ',' lambda_param_maybe_default '['lambda_kwds']' 
+    | lambda_kwds 
+    ;   
+//lamda kwds
+lambda_kwds: DOUBLESTAR lambda_param_no_default 
+    ;
+//lamda param no default
+lambda_param_no_default:
+     lambda_param ',' 
+    | lambda_param PLOOK':'
+    ;
+//lambda param with default 
+lambda_param_with_default:
+     lambda_param default ',' 
+    | lambda_param default PLOOK':'
+    ;
+//lambda param maybe default 
+lambda_param_maybe_default:
+     lambda_param default'?' ',' 
+    | lambda_param default'?' PLOOK':'
+    ;
+//lambda param 
+lambda_param: NAME 
+    ;
+//disjunction
+disjunction:
+   dsx '(' OR dsx ')'
+    ;
+dsx:
+     conjunction
+    ;
+//conjunction
+conjunction:
+     inversion '('AND inversion ')'
+    ;
+//inversion
+inversion:
+     inv1 
+     | comparison
+    ;
+inv1:
+     NOT inversion
+    ;
+ //comparison
+comparison:
+     bitwise_or compare_op_bitwise_or_pair 
+    | bitwise_or
+    ;
+compare_op_bitwise_or_pair:
+    eq_bitwise_or
+    |noteq_bitwise_or
+    |lte_bitwise_or
+    |lt_bitwise_or
+    |gte_bitwise_or
+    |gt_bitwise_or
+    |notin_bitwise_or
+    |in_bitwise_or
+    |isnot_bitwise_or
+    |is_bitwise_or
+    ;
+eq_bitwise_or: 
+    EQUALTO bitwise_or
+        ;
+noteq_bitwise_or:
+     NOTEQUAL ')' bitwise_or
+        ;
+lte_bitwise_or: 
+    LESSEQUAL bitwise_or
+        ;
+lt_bitwise_or: 
+    '<' bitwise_or
+        ;
+gte_bitwise_or: 
+    GREATEREQUAL bitwise_or
+        ;
+gt_bitwise_or: 
+    '>' bitwise_or
+        ;
+notin_bitwise_or: 
+    NOT IN bitwise_or
+        ;
+in_bitwise_or: 
+    IN bitwise_or
+        ;
+isnot_bitwise_or: 
+    IS NOT bitwise_or
+        ;
+is_bitwise_or:
+     IS bitwise_or
+    ;
+bitwise_or:
+    bitwise_or VBAR bitwise_xor
+    |bitwise_xor
+    ;
+bitwise_xor:
+     bitwise_xor BXOR bitwise_and
+    |bitwise_and
+    ;
+bitwise_and:
+     band AMPER shift_expr 
+   | shift_expr
+    ;
+band:
+    | bitwise_and
+    ;
+shift_expr:
+    shft LEFTSHIFT sum
+    |shft RIGHTSHIFT sum
+    | sum
+    ;
+shft:
+    shift_expr
+    ;
+sum:
+     sum '+' term
+    | sum '-' term
+    | term
+    ;
+term:
+      trm
+     | factor
+    ;
+trm:
+     term '*' factor 
+      term '/' factor 
+     term DOUBLESLASH factor 
+     term '%' factor 
+     term '@' factor 
+    ;
+factor:
+     fac
+     | power
+    ; 
+fac:
+     '+' factor 
+     '-' factor 
+     '~' factor
+    ;
+//POWER
+power:
+     pow1 await_exp 
+    | await_primary
+    ;
+pow1:
+     await_primary
+     ;     
+await_exp:
+    DOUBLESTAR factor
+    ;
+await_primary:
+     AWAIT primary
+    ;
+primary:
+    |prn
+     prn1
+     prn2
+     |prn3
+     atom
+    ;
+prn:
+     primary '.' NAME
+      // | atom
+      ;
+prn1:
+     primary LBR '['arguments']' RBR
+      ;
+prn2: 
+     primary genexp
+      ;
+prn3:
+      primary LSQB slices RSQB 
+    ;
+//SLICES
+slices:
+     slice NLOOK ',' 
+    | ',''.'slice '['','']' 
+    ;
+slice:
+     '['expression']' ':' '['expression']' '['':' '['expression']' ']' 
+    | named_expression 
+    ;
+atom:
+     NAME
+     TRUE 
+     FALSE 
+     NONE 
+    | strings
+     NUMBER
+    | '('tuple | group | genexp')'
+    | '('list | listcomp')'
+    | '('dict | set | dictcomp | setcomp')'
+     ELLIPSIS 
+    ;
+strings: STRING
+    ;
+list:
+     LSQB '['star_named_expressions']' RSQB
+    ;
+listcomp:
+     LSQB named_expression for_if_clauses RSQB
+    ;
+tuple:
+     LBR '['star_named_expression ',' '['star_named_expressions']'  ']' RBR
+    ;
+group:
+     LBR '('yield_expr | named_expression')' RBR
+    ;
+genexp:
+     LBR '('assigment_expression | expression NLOOK COLONEQUAL ')' for_if_clauses RBR
+    ;
+set: '{' star_named_expressions '}' 
+    ;
+setcomp:
+     '{' named_expression for_if_clauses '}' 
+    ;
+dict:
+    '{' '['double_starred_kvpairs']' '}' 
+    ;
+dictcomp:
+     '{' kvpair for_if_clauses '}' 
+    ;
+double_starred_kvpairs:
+      ',''.'double_starred_kvpair '['','']' 
+    ;
+double_starred_kvpair:
+    |DOUBLESTAR bitwise_or
+    | kvpair
+    ;
+kvpair: expression ':' expression
+    ;
+for_if_clauses:
+    |for_if_clause
+    ;
+for_if_clause:
+     ASYNC FOR star_targets IN TILDE disjunction '('IF disjunction ')''*'
+     |FOR star_targets IN TILDE disjunction '('IF disjunction ')''*'
+    ;
+yield_expr:
+     YIELD FROM expression
+    | YIELD '['star_expressions']'
+    ;
+ arguments:
+    | args '['','']' '&'')' 
+    ;
+ args:
+    | ',''.''('starred_expression | '(' assigment_expression | expression '!' COLONEQUAL ')' '!' EQUAL')' '['',' kwargs']' 
+    | kwargs 
+    ;
+ kwargs:
+     ',''.'kwarg_or_starred ',' ',''.'kwarg_or_double_starred
+    | ',''.'kwarg_or_starred
+    | ',''.'kwarg_or_double_starred
+    ;
+ starred_expression:
+    | '*' expression
+    ;
+ kwarg_or_starred:
+      NAME EQUAL expression
+     starred_expression
+        ;
+kwarg_or_double_starred:
+    | NAME '=' expression
+     DOUBLESTAR expression
+    ;
+//# NOTE: star_targets may contain *bitwise_or, targets may not.
+star_targets:
+     star_target '!'',' 
+    | star_target '('',' star_target ')''*' '['','']' 
+    ;
+star_targets_list_seq: ',' '.'star_target '[' ',' ']'
+        ;
+star_targets_tuple_seq:
+     star_target '('',' star_target ')' '['','']'
+    | star_target ','
+    ;
+star_target:
+     '*' '('NLOOK '*' star_target')' 
+    | target_with_star_atom
+    ;
+target_with_star_atom:
+     t_primary '.' NAME '!' t_lookahead 
+    | t_primary LSQB slices RSQB '!' t_lookahead 
+     star_atom
+    ;
+star_atom:
+     NAME 
+    | LBR target_with_star_atom RBR 
+    | LBR '['star_targets_tuple_seq']' RBR 
+    | LSQB '['star_targets_list_seq']' RSQB 
+    ;
+single_target:
+     single_subscript_attribute_target
+     NAME
+     |LBR single_target RBR
+    ;
+single_subscript_attribute_target:
+     t_primary '.' NAME '!' t_lookahead 
+    | t_primary LSQB slices RSQB '!' t_lookahead 
+    ;
+del_targets: ',' '.' del_target '['',' ']'
+    ;
+del_target:
+     t_primary '.' NAME '!' t_lookahead 
+    | t_primary LSQB slices RSQB '!' t_lookahead 
+    | del_t_atom
+    ;
+del_t_atom:
+     NAME
+    | LBR del_target RBR 
+    | LBR '['del_targets']' RBR
+    | LSQB '['del_targets']' RSQB
+    ;
+//Tprimary
+t_primary:
+    t_primary '.' NAME PLOOK t_lookahead 
+    | t_primary LSQB slices RSQB PLOOK t_lookahead 
+    | t_primary genexp PLOOK t_lookahead 
+    | t_primary LBR '['arguments']' RBR PLOOK t_lookahead 
+    | atom PLOOK t_lookahead 
+    ;
+t_lookahead: 
+    '(' | LBR
+    | '[' |LSQB
+    | '.' |DOT
+    ;
+%%

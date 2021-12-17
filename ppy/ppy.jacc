@@ -1,0 +1,148 @@
+%class ppy
+%interface ppyTokens
+%semantic int : yylval
+%get token
+%next yylex()
+%token NEWLINE INDENT DEDENT TYPE_COMMENT ASYNC AWAIT NAME NUMBER STRING YIELD LAMDA
+%token '+' '-' '*' '/' '(' ')' '[' ']' ';' '.' '!' ':' '|' ',' '%' '^' '@' '{' '}' '=' 
+%token '&' '~' '?' '_' NOT OR AND
+%token IF ELIF THEN ELSE FOR WHILE DO IMPORT NONE TRUE FALSE IS IN AS DEF TRY EXCEPT FINALLY
+%token BREAK PASS CONTINUE GLOBAL NONLOCAL RAISE FROM DEL CLASS WITH  MATCH CASE RETURN ASSERT 
+%token NLOOK PLOOK RARROW TILDE DOUBLESTAR DOUBLESLASH LEFTSHIFT RIGHTSHIFT EQUAL
+%token NOTEQUAL EQUALTO GREATEREQUAL LESSEQUAL COLONEQUAL ELLIPSIS DOT
+%token LSQB RSQB LBR RBR VBAR BXOR AMPER PLUS MINUS
+%left '(' ')'
+%left '*' '@' '/' '%'
+%left '+' '-'
+%left LEFTSHIFT RIGHTSHIFT
+%nonassoc AWAIT IF ELIF
+%%
+file : 
+  LBR statements RBR
+  ;
+statements: statement
+  ;
+statement: compound_stmt 
+   | simple_stmts 
+  ;
+%%
+private void yyerror(String msg) {
+System.out.println("ERROR: " + msg);
+System.exit(1);
+}
+
+//Scanner sc = new Scanner();
+//  sc = System.in;
+private int c;
+
+private void nextChar() {
+if (c>=0) {
+try {
+c = System.in.read();
+} catch (Exception e) {
+c = (-1);
+}
+}
+}
+
+int token;
+int yylval;
+
+
+int yylex() {
+  for (;;) {
+    // Skip whitespace
+    while (c==' ' || c=='\n' || c=='\t' || c=='\r') {
+    nextChar();
+  }
+    if (c<0) {
+    return (token=ENDINPUT);
+  }
+  switch (c) {
+  case '+' : nextChar();
+  return token='+';
+  
+  case '-' : nextChar();
+  return token='-';
+  case '*' : nextChar();
+  return token='*';
+  case '/' : nextChar();
+  return token='/';
+  case '(' : nextChar();
+  return token='(';
+  case ')' : nextChar();
+  return token=')';
+  case ';' : nextChar();
+  return token=';';
+  case '[' : nextChar();
+  return token='[';
+  case ']' : nextChar();
+  return token=']';
+  case '.' : nextChar();
+  return token='.';
+  case '!' : nextChar();
+  return token='!';
+  case ':' : nextChar();
+  return token=':';
+  case '|' : nextChar();
+  return token='|';
+  case ',' : nextChar();
+  return token=',';
+  case '%' : nextChar();
+  return token='%';
+  case '^' : nextChar();
+  return token='^';
+  case '@' : nextChar();
+  return token='@';
+  case '{' : nextChar();
+  return token='{';
+  case '}' : nextChar();
+  return token='}';
+  case '=' : nextChar();
+  return token='=';
+  case '&' : nextChar();
+  return token='&';
+  case '~' : nextChar();
+  return token='~';
+  case '?' : nextChar();
+  return token='?';
+  case '_' : nextChar();
+  return token='_';
+
+  default : if (Character.isDigit((char)c)) {
+  int n = 0;
+  do {
+  n = 10*n + (c - '0');
+  nextChar();
+  } while (Character.isDigit((char)c));
+  yylval = n;
+  return token=NUMBER;
+    } else {
+      yyerror("Illegal character "+c);
+      nextChar();
+    }
+  }
+  
+  //sc.close();
+}
+}
+
+public static void main(String[] args) {
+    //lexer
+
+    vbParser parS = new vbParser();
+
+    parS.nextChar();
+    parS.yylex();
+    parS.parse();
+
+    //vbLexer lexer = new vbLexer();
+  //  lexer.nextToken();
+    //parser
+  //  volaParser parser = new volaParser(lexer);
+  //  parser.parse();
+  }
+  static void error(String msg) {
+    System.out.println("ERROR: " + msg);
+    System.exit(1);
+  }
